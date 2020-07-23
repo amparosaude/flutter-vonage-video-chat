@@ -1,0 +1,18 @@
+[submodule "core.app"]
+	path = core.app
+	url = git@github.com:amparosaude/core.app.git
+[submodule "core.api"]
+	path = core.api
+	url = git@github.com:amparosaude/core.api.git
+[submodule "portal.api"]
+	path = portal.api
+	url = git@github.com:amparosaude/portal.api.git
+[submodule "portal.app"]
+	path = portal.app
+	url = git@github.com:amparosaude/portal.app.git
+[submodule "traffic.app"]
+	path = traffic.app
+	url = git@github.com:amparosaude/traffic.app.git
+[submodule "traffic.api"]
+	path = traffic.api
+	url = git@github.com:amparosaude/traffic.api.git
