@@ -1,6 +1,11 @@
 version: '3'
 services:
   # CORE -----------------------
+  redis-cache:
+    image: redis:alpine
+    ports:
+      - 6380:6379
+
   db_core:
     image: postgres:10.4-alpine
     ports:
@@ -22,8 +27,10 @@ services:
     command: bash -c "npm run db:migrate && npm run db:seed:all && npm run db:seed:all:tests && nodemon src/index.js"
     links:
       - db_core
+      - redis-cache
     depends_on:
       - db_core
+      - redis-cache
 
   app_core:
     image: node:12.16.1
@@ -38,7 +45,7 @@ services:
     depends_on:
         - api_core
 
-  # #PORTAL --------------------------
+  # PORTAL --------------------------
   db_portal:
     image: postgres:10.4-alpine
     ports:
@@ -57,80 +64,25 @@ services:
         - ./portal.api/.env
     ports:
         - "9000:9000"
-    command: bash -c "npm run db:migrate && npm run db:seed:all && nodemon src/index.js"
+    command: bash -c "npm run db:migrate && npm run db:seed:all && npm run db:seed:all:tests && nodemon src/index.js"
     links:
         - db_portal
         - api_core
     depends_on:
         - db_portal
         - api_core
+
   app_portal:
     image: node:12.16.1
     volumes:
         - ./portal.app:/app
     working_dir: /app
     ports:
-        - 8181:8080
+        - 8181:8181
     command: bash -c "npm run dev"
     env_file:
         - ./portal.app/.env
+    links:
+        - api_portal
     depends_on:
         - api_portal
-    
-  #TRAFFIC --------------------------
-  redis-queue:
-    image: redis:alpine
-    ports:
-      - 6379:6379
-  db_traffic:
-    image: postgres:10.4-alpine
-    ports:
-      - 5434:5432
-    environment:
-      POSTGRES_USER: 'amparo'
-      POSTGRES_PASSWORD: 'amparo'
-      POSTGRES_DB: 'amparo'
-  api_traffic:
-    build: ./traffic.api
-    volumes:
-      - ./traffic.api:/usr/src/app
-      - /usr/src/app/node_modules
-    ports:
-      - "3000:9000"
-    env_file:
-      - ./traffic.api/.env
-    command: bash -c "npm run db:migrate && npm run db:seed:all && npm run db:seed:all:tests && nodemon src/index.js"
-    links:
-      - db_traffic
-      - redis-queue
-    depends_on:
-      - db_traffic
-      - redis-queue
-  request-job:
-    build: ./traffic.api
-    volumes:
-      - ./traffic.api:/usr/src/app
-      - /usr/src/app/node_modules
-    env_file:
-      - ./traffic.api/.env
-    command: ["npm",  "run", "dev:jobs:request"]
-    links:
-      - db_traffic
-      - redis-queue
-    depends_on:
-      - db_traffic
-      - redis-queue
-      - api_traffic
-  app_traffic:
-    image: node:12.16.1
-    volumes:
-        - ./traffic.app:/app
-    working_dir: /app
-    ports:
-        - 8282:8080
-    command: bash -c "npm run dev"
-    env_file:
-        - ./traffic.app/.env
-    depends_on:
-        - api_traffic
-      
