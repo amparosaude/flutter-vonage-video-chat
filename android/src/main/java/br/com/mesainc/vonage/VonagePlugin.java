@@ -54,7 +54,9 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
     nativeVonageView = new NativeViewFactory();
     flutterPluginBinding.getPlatformViewRegistry()
             .registerViewFactory("flutter-vonage-video-chat", nativeVonageView);
-
+    vonageView = View.inflate(mContext, R.layout.vonage_view, null);
+    publisherViewContainer = vonageView.findViewById(R.id.publisher_container);
+    subscriberViewContainer = vonageView.findViewById(R.id.subscriber_container);
   }
 
   @Override
@@ -143,8 +145,10 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
     try {
       mPublisher = new Publisher.Builder(mContext).name(name).build();
       mPublisher.setPublisherListener(this);
-      publisherViewContainer.removeAllViews();
-      publisherViewContainer.addView(mPublisher.getView());
+      if(publisherViewContainer != null) {
+        publisherViewContainer.removeAllViews();
+        publisherViewContainer.addView(mPublisher.getView());
+      }
       mSession.publish(mPublisher);
     } catch (Exception error){
       Log.d(LOG_TAG,error.toString());
@@ -155,8 +159,10 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
 
   private String unpublishStream() {
     mSession.unpublish(mPublisher);
-    publisherViewContainer.removeAllViews();
-    publisherViewContainer.addView(subscriberViewContainer);
+    if(publisherViewContainer != null) {
+      publisherViewContainer.removeAllViews();
+    }
+    //publisherViewContainer.addView();
     return "";
   }
 
@@ -186,7 +192,7 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
 
   private void renderView(){
     subscribingStream();
-    if(mPublisher != null) {
+    if(mPublisher != null && publisherViewContainer != null) {
       publisherViewContainer.removeView(mPublisher.getView());
       publisherViewContainer.addView(mPublisher.getView());
     }
@@ -232,16 +238,18 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
   @Override
   public void onConnected(Session session) {
     Log.i(LOG_TAG, "Session Connected");
-    vonageView = View.inflate(mContext,R.layout.vonage_view,null);
-    publisherViewContainer = vonageView.findViewById(R.id.publisher_container);
-    subscriberViewContainer = vonageView.findViewById(R.id.subscriber_container);
-    renderView();
+    if(vonageView == null) {
+      vonageView = View.inflate(mContext, R.layout.vonage_view, null);
+      publisherViewContainer = vonageView.findViewById(R.id.publisher_container);
+      subscriberViewContainer = vonageView.findViewById(R.id.subscriber_container);
+
+    }
   }
 
   @Override
   public void onDisconnected(Session session) {
     Log.i(LOG_TAG, "Session Disconnected");
-    vonageView.removeView();
+    vonageView = null;
 
   }
 
@@ -252,6 +260,10 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
     if (stream != null){
       mSubscriber = new Subscriber.Builder(mContext, stream).build();
       mSubscriber.getRenderer().setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE, BaseVideoRenderer.STYLE_VIDEO_FILL);
+      Log.d(LOG_TAG,mPublisher.toString());
+      if(mPublisher!=null) {
+        mSession.publish(mPublisher);
+      }
       renderView();
     }
   }
