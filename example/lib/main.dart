@@ -17,10 +17,10 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _tokboxSessionId = '1_MX40NzMwMTc5NH5-MTYyODUzNjQyNTMzOX5ENlVLZkZDdU56cVQxS0FzL2JoVkJ2Ykt-fg';
-  String _tokboxToken = 'T1==cGFydG5lcl9pZD00NzMwMTc5NCZzaWc9YTk0NjRmNzZiOWMyOTY5Y2NkMjMxY2EwOWQ5NDVkNzg5NTg5NGRjOTpzZXNzaW9uX2lkPTFfTVg0ME56TXdNVGM1Tkg1LU1UWXlPRFV6TmpReU5UTXpPWDVFTmxWTFprWkRkVTU2Y1ZReFMwRnpMMkpvVmtKMllrdC1mZyZjcmVhdGVfdGltZT0xNjI4NTM2NDI1Jm5vbmNlPTAuMDMwMDY4NzM5OTU3NDkwNTk4JnJvbGU9cHVibGlzaGVyJmV4cGlyZV90aW1lPTE2MzEwNDIwMjUmaW5pdGlhbF9sYXlvdXRfY2xhc3NfbGlzdD0=';
-  String _tokboxApiKey = '47301794';
-  String _publishId = 'PUBLISH_ID';
+  String _tokboxSessionId = 'Session_id';
+  String _tokboxToken = 'TokBoxToken';
+  String _tokboxApiKey = 'ApiKey';
+  String _publishId = 'PublishId';
 
   bool _sessionInited = false;
   bool _isPublishing = false;
