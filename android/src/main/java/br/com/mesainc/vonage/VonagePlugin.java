@@ -54,9 +54,7 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
     nativeVonageView = new NativeViewFactory();
     flutterPluginBinding.getPlatformViewRegistry()
             .registerViewFactory("flutter-vonage-video-chat", nativeVonageView);
-    vonageView = View.inflate(mContext,R.layout.vonage_view,null);
-    publisherViewContainer = vonageView.findViewById(R.id.publisher_container);
-    subscriberViewContainer = vonageView.findViewById(R.id.subscriber_container);
+
   }
 
   @Override
@@ -234,12 +232,17 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
   @Override
   public void onConnected(Session session) {
     Log.i(LOG_TAG, "Session Connected");
+    vonageView = View.inflate(mContext,R.layout.vonage_view,null);
+    publisherViewContainer = vonageView.findViewById(R.id.publisher_container);
+    subscriberViewContainer = vonageView.findViewById(R.id.subscriber_container);
     renderView();
   }
 
   @Override
   public void onDisconnected(Session session) {
     Log.i(LOG_TAG, "Session Disconnected");
+    vonageView.removeView();
+
   }
 
   @Override
