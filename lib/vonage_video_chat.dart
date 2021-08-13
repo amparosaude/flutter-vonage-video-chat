@@ -7,19 +7,26 @@ import 'package:permission_handler/permission_handler.dart';
 class VonageVideoChat {
   static const MethodChannel _channel = const MethodChannel('vonage');
 
-  static Future<Map> initSession(Session session) async {
+  static const EventChannel _event = const EventChannel('vonage-video-chat-session');
+  static const EventChannel _hasStream = const EventChannel('vonage-video-chat-hasStream');
+
+  Stream get sessionStream => _event.receiveBroadcastStream();
+  Stream<bool> get hasStream => _hasStream.receiveBroadcastStream();
+
+  static Future<SessionResponse> initSession(Session session) async {
     print ('initSession');
     bool havePermissions = await checkPermissions();
     if (havePermissions) {
       try {
-        return await _channel.invokeMethod('initSession', { "sessionId": session.id, "token": session.token,
+        final result = await _channel.invokeMethod('initSession', { "sessionId": session.id, "token": session.token,
           "apiKey": session.apiKey });
+        return SessionResponse.fromJson(result);
       } on PlatformException {
-        return {'success' : false};
+        return SessionResponse(false);
       }
     }
     print("permissions not granted");
-    return {'success' : false};
+    return SessionResponse(false);
   }
 
   static Future<String> endSession() async {
@@ -31,9 +38,9 @@ class VonageVideoChat {
     }
   }
 
-  static Future<String> publishStream(String name, int viewId) async {
+  static Future<String> publishStream(String publisherName) async {
     try {
-      return await _channel.invokeMethod('publishStream', { "name": name, "viewId": viewId });
+      return await _channel.invokeMethod('publishStream', { "name": publisherName });
     } on PlatformException {
       return "error";
     }

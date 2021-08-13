@@ -52,7 +52,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _publishStream() async {
-    String ret = await VonageVideoChat.publishStream("Jõao", _pluginViewId);
+    String ret = await VonageVideoChat.publishStream("Jõao");
     setState(() {
       _isPublishing = true;
     });

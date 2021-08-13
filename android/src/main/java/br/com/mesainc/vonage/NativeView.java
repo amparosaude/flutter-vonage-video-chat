@@ -18,6 +18,7 @@ class NativeView implements PlatformView {
         // textView = new TextView(context);
         // textView.setText("Rendered on a native Android view (id: " + id + ")");
         view = new FrameLayout(context);
+        view.setId(id);
     }
 
     @NonNull

@@ -3,7 +3,9 @@ package br.com.mesainc.vonage;
 import android.content.Context;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 
@@ -14,17 +16,21 @@ import com.opentok.android.PublisherKit;
 import com.opentok.android.Session;
 import com.opentok.android.Stream;
 import com.opentok.android.Subscriber;
+import com.opentok.android.SubscriberKit;
 
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+import io.reactivex.Observable;
 
 /** VonagePlugin.kt */
 public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
@@ -34,8 +40,14 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
   /// This local reference serves to register the plugin with the Flutter Engine and unregister it
   /// when the Flutter Engine is detached from the Activity
   private MethodChannel channel;
+  private EventChannel event;
+  private EventChannel eventHasStream;
   private NativeViewFactory nativeVonageView;
+  private NativeViewFactory nativePublisherView;
   private View vonageView;
+  private View noCameraView;
+  private View noCameraSubscriberView;
+  private ImageView soundEnabledSubscriber;
 
   private Context mContext;
   private ExecutorService executor
@@ -46,17 +58,29 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
 
   @Override
   public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
+    Log.d(LOG_TAG,"onAttachedToEngine");
     channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "vonage");
+    event = new EventChannel(flutterPluginBinding.getBinaryMessenger(),"vonage-video-chat-session");
+    eventHasStream = new EventChannel(flutterPluginBinding.getBinaryMessenger(),"vonage-video-chat-hasStream");
+    initEvents();
     channel.setMethodCallHandler(this);
 
     mContext = flutterPluginBinding.getApplicationContext();
 
     nativeVonageView = new NativeViewFactory();
+    nativePublisherView = new NativeViewFactory();
     flutterPluginBinding.getPlatformViewRegistry()
             .registerViewFactory("flutter-vonage-video-chat", nativeVonageView);
+    flutterPluginBinding.getPlatformViewRegistry()
+            .registerViewFactory("flutter-vonage-publisher-view", nativePublisherView);
     vonageView = View.inflate(mContext, R.layout.vonage_view, null);
+    noCameraView = View.inflate(mContext,R.layout.no_camera,null);
+    noCameraSubscriberView = View.inflate(mContext,R.layout.no_camera,null);
+    soundEnabledSubscriber = noCameraSubscriberView.findViewById(R.id.sound_enable);
     publisherViewContainer = vonageView.findViewById(R.id.publisher_container);
     subscriberViewContainer = vonageView.findViewById(R.id.subscriber_container);
+
+
   }
 
   @Override
@@ -101,23 +125,51 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
   @Override
   public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
     channel.setMethodCallHandler(null);
+    Log.d(LOG_TAG,"onDetachedFromEngine");
   }
 
 
 
   private static final String LOG_TAG = "flutter-vonage-video-log-tag";
-  private static final int RC_SETTINGS_SCREEN_PERM = 123;
-  private static final int RC_VIDEO_APP_PERM = 124;
 
   private Session mSession;
   private Publisher mPublisher;
   private Subscriber mSubscriber;
 
-  private boolean hasPublished = false;
+  private boolean hasStream = false;
+  private boolean sessionStatus = false;
+  private boolean subscriberAudioEnabled = false;
 
   private String _sessionId;
   private String _token;
   private String _apiKey;
+
+  private void  initEvents(){
+    event.setStreamHandler(new EventChannel.StreamHandler() {
+      @Override
+      public void onListen(Object arguments, EventChannel.EventSink events) {
+        events.success(sessionStatus);
+      }
+
+      @Override
+      public void onCancel(Object arguments) {
+
+      }
+    });
+
+    eventHasStream.setStreamHandler(new EventChannel.StreamHandler() {
+      @Override
+      public void onListen(Object arguments, EventChannel.EventSink events) {
+        events.success(hasStream);
+      }
+
+      @Override
+      public void onCancel(Object arguments) {
+
+      }
+    });
+  }
+
 
   private HashMap<String,Object> initSession(String sessionId, String token, String apiKey){
     HashMap<String,Object> result = new HashMap<String,Object>();
@@ -126,15 +178,19 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
       _sessionId = sessionId;
       _token = token;
       _apiKey = apiKey;
-      System.out.println("Esperando");
       Future x = initializeSession();
       while(!x.isDone()){};
-      System.out.println("Session realizada");
-      nativeVonageView.getView().addView(vonageView);
+      if(nativeVonageView.platformView != null) {
+        nativeVonageView.getView().addView(vonageView);
+      }
+      synchronized (event){
+        event.notify();
+      }
       result.put("success",true);
     } catch (Exception error){
       Log.d(LOG_TAG,error.toString());
       result.put("success",false);
+      throw error;
     }
     renderView();
     return result;
@@ -146,13 +202,14 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
       mPublisher = new Publisher.Builder(mContext).name(name).build();
       mPublisher.setPublisherListener(this);
       if(publisherViewContainer != null) {
-        publisherViewContainer.removeAllViews();
+        if(publisherViewContainer.getParent() != null) {
+          ((ViewGroup)publisherViewContainer.getParent()).removeView(mPublisher.getView()); // <- fix
+        }
         publisherViewContainer.addView(mPublisher.getView());
       }
       mSession.publish(mPublisher);
     } catch (Exception error){
-      Log.d(LOG_TAG,error.toString());
-      Log.d(LOG_TAG,"ops");
+      Log.e(LOG_TAG,error.toString());
     }
     return "";
   }
@@ -182,10 +239,12 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
   }
 
   private String subscribingStream(){
+    subscriberViewContainer.removeAllViews();
     if(mSubscriber != null && mSubscriber.getView() != null) {
-      subscriberViewContainer.removeView(mSubscriber.getView());
       subscriberViewContainer.addView(mSubscriber.getView());
       mSession.subscribe(mSubscriber);
+    } else {
+      subscriberViewContainer.addView(View.inflate(mContext,R.layout.progress,null));
     }
     return "";
   }
@@ -193,7 +252,7 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
   private void renderView(){
     subscribingStream();
     if(mPublisher != null && publisherViewContainer != null) {
-      publisherViewContainer.removeView(mPublisher.getView());
+      publisherViewContainer.removeAllViews();
       publisherViewContainer.addView(mPublisher.getView());
     }
   }
@@ -221,6 +280,7 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
     if(mPublisher != null) {
       mPublisher.setPublishVideo(true);
       result = true;
+      publisherViewContainer.removeView(noCameraView);
     }
     return result;
   }
@@ -230,6 +290,7 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
     if(mPublisher != null) {
       mPublisher.setPublishVideo(false);
       result = true;
+      publisherViewContainer.addView(noCameraView);
     }
     return result;
   }
@@ -238,19 +299,24 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
   @Override
   public void onConnected(Session session) {
     Log.i(LOG_TAG, "Session Connected");
-    if(vonageView == null) {
-      vonageView = View.inflate(mContext, R.layout.vonage_view, null);
-      publisherViewContainer = vonageView.findViewById(R.id.publisher_container);
-      subscriberViewContainer = vonageView.findViewById(R.id.subscriber_container);
+    sessionStatus = true;
 
+    if(publisherViewContainer == null) {
+      publisherViewContainer = vonageView.findViewById(R.id.publisher_container);
+    }
+    if(subscriberViewContainer == null){
+      subscriberViewContainer = vonageView.findViewById(R.id.subscriber_container);
     }
   }
 
   @Override
   public void onDisconnected(Session session) {
     Log.i(LOG_TAG, "Session Disconnected");
-    vonageView = null;
-
+    //vonageView = null;
+    sessionStatus = false;
+    publisherViewContainer.removeAllViews();
+    subscriberViewContainer.removeAllViews();
+    nativeVonageView.getView().removeAllViews();
   }
 
   @Override
@@ -258,9 +324,52 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
     Log.d(LOG_TAG, "onStreamReceived: New Stream Received " + stream.getStreamId() + " in session: " + session.getSessionId());
 
     if (stream != null){
+
       mSubscriber = new Subscriber.Builder(mContext, stream).build();
       mSubscriber.getRenderer().setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE, BaseVideoRenderer.STYLE_VIDEO_FILL);
       Log.d(LOG_TAG,mPublisher.toString());
+      mSubscriber.setAudioLevelListener(new SubscriberKit.AudioLevelListener() {
+        @Override
+        public void onAudioLevelUpdated(SubscriberKit subscriberKit, float v) {
+          if(v == 0){
+            if(subscriberAudioEnabled){
+              subscriberAudioEnabled = false;
+              soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_off_24);
+            }
+          } else {
+            if(!subscriberAudioEnabled){
+              subscriberAudioEnabled = true;
+              soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_up_24);
+            }
+          }
+        }
+      });
+      mSubscriber.setVideoListener(new SubscriberKit.VideoListener() {
+        @Override
+        public void onVideoDataReceived(SubscriberKit subscriberKit) {
+
+        }
+
+        @Override
+        public void onVideoDisabled(SubscriberKit subscriberKit, String s) {
+          subscriberViewContainer.addView(noCameraSubscriberView);
+        }
+
+        @Override
+        public void onVideoEnabled(SubscriberKit subscriberKit, String s) {
+          subscriberViewContainer.removeView(noCameraSubscriberView);
+        }
+
+        @Override
+        public void onVideoDisableWarning(SubscriberKit subscriberKit) {
+
+        }
+
+        @Override
+        public void onVideoDisableWarningLifted(SubscriberKit subscriberKit) {
+
+        }
+      });
       if(mPublisher!=null) {
         mSession.publish(mPublisher);
       }
@@ -271,8 +380,8 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
   @Override
   public void onStreamDropped(Session session, Stream stream) {
     Log.i(LOG_TAG, "Stream Dropped");
-    subscriberViewContainer.removeAllViews();
-    subscriberViewContainer.addView(View.inflate(mContext,R.layout.progress,null));
+    subscriberViewContainer.removeView(mSubscriber.getView());
+
   }
 
   @Override

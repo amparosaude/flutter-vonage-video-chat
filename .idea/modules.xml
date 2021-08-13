@@ -2,9 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/vonage.iml" filepath="$PROJECT_DIR$/vonage.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/vonage_android.iml" filepath="$PROJECT_DIR$/android/vonage_android.iml" />
-      <module fileurl="file://$PROJECT_DIR$/example/android/vonage_example_android.iml" filepath="$PROJECT_DIR$/example/android/vonage_example_android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/vonage.iml" filepath="$PROJECT_DIR$/.idea/vonage.iml" />
     </modules>
   </component>
 </project>

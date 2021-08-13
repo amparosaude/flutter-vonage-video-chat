@@ -15,14 +15,7 @@ import io.flutter.plugin.platform.PlatformViewFactory;
 
 class NativeViewFactory extends PlatformViewFactory {
   NativeView platformView;
-  // @NonNull private final BinaryMessenger messenger;
-  // @NonNull private final View containerView;
 
-  // NativeViewFactory(@NonNull BinaryMessenger messenger, @NonNull View containerView) {
-  //   super(StandardMessageCodec.INSTANCE);
-  //   this.messenger = messenger;
-  //   this.containerView = containerView;
-  // }
   NativeViewFactory() {
     super(StandardMessageCodec.INSTANCE);
   }
@@ -31,11 +24,11 @@ class NativeViewFactory extends PlatformViewFactory {
   @Override
   public NativeView create(@NonNull Context context, int id, @Nullable Object args) {
     final Map<String, Object> creationParams = (Map<String, Object>) args;
-    platformView = new NativeView(context, id, creationParams);
-    return platformView;
+    this.platformView = new NativeView(context, id, creationParams);
+    return this.platformView;
   }
 
   public FrameLayout getView() {
-    return platformView.getView();
+    return this.platformView.getView();
   }
 }
