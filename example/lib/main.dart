@@ -17,9 +17,9 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _tokboxSessionId = 'Session_id';
-  String _tokboxToken = 'TokBoxToken';
-  String _tokboxApiKey = 'ApiKey';
+  String _tokboxSessionId = '1_MX40NzMwMTc5NH5-MTYyOTIyNjMyODk3M34rZXFTMDhoYmF1ZU9TS3IxOG53Y3laaUV-fg';
+  String _tokboxToken = 'T1==cGFydG5lcl9pZD00NzMwMTc5NCZzaWc9NzdmZGZlOTk2ZmZiZjFmNjZmOTBkNTU4NzgzOGE3MWZmODMzMTIwZTpzZXNzaW9uX2lkPTFfTVg0ME56TXdNVGM1Tkg1LU1UWXlPVEl5TmpNeU9EazNNMzRyWlhGVE1EaG9ZbUYxWlU5VFMzSXhPRzUzWTNsYWFVVi1mZyZjcmVhdGVfdGltZT0xNjI5MjI2MzI5Jm5vbmNlPTAuMTYxOTY4ODA0Mzc2MjU1OTQmcm9sZT1wdWJsaXNoZXImZXhwaXJlX3RpbWU9MTYzMTczMTkyOCZpbml0aWFsX2xheW91dF9jbGFzc19saXN0PQ==';
+  String _tokboxApiKey = '47301794';
   String _publishId = 'PublishId';
 
   bool _sessionInited = false;
@@ -158,14 +158,10 @@ class _MyAppState extends State<MyApp> {
           body: Container(
             width: size.width,
             height: size.height,
+            // child: VonageVideoChatScreen(),
             child: Stack(
               children: [
-                Align(
-                  alignment: Alignment.center,
-                  child: Center(
-                    child: VonageVideoChatScreen(),
-                  ),
-                ),
+                VonageVideoChatScreen(),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: renderButtons(),

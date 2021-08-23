@@ -4,13 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
-// typedef void PublisherViewCreatedCallback(PublisherViewController controller);
-
-class PublisherView extends StatelessWidget {
-  static String _viewType = 'flutter-vonage-publisher-view';
+class SubscriberView extends StatelessWidget {
+  static String _viewType = 'flutter-vonage-subscriber-view';
   int _pluginViewId = -1;
 
-  PublisherView({ Key key }) : super(key: key);
+  SubscriberView({ Key key }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -50,11 +48,4 @@ class PublisherView extends StatelessWidget {
     }
     return Container();
   }
-
-  // void _onPlatformViewCreated(int id) {
-  //   if (onMagicViewCreated == null) {
-  //     return;
-  //   }
-  //   onMagicViewCreated(MagicViewController(id));
-  // }
 }
