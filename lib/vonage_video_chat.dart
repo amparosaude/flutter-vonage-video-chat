@@ -11,7 +11,7 @@ class VonageVideoChat {
   static const EventChannel _hasStream = const EventChannel('vonage-video-chat-hasStream');
 
   Stream get sessionStream => _event.receiveBroadcastStream();
-  Stream<bool> get hasStream => _hasStream.receiveBroadcastStream();
+  Stream get hasStream => _hasStream.receiveBroadcastStream();
 
   static Future<SessionResponse> initSession(Session session) async {
     print ('initSession');
