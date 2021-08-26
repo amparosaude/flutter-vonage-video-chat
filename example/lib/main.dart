@@ -17,8 +17,8 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _tokboxSessionId = '1_MX40NzMwMTc5NH5-MTYyOTIyNjMyODk3M34rZXFTMDhoYmF1ZU9TS3IxOG53Y3laaUV-fg';
-  String _tokboxToken = 'T1==cGFydG5lcl9pZD00NzMwMTc5NCZzaWc9NzdmZGZlOTk2ZmZiZjFmNjZmOTBkNTU4NzgzOGE3MWZmODMzMTIwZTpzZXNzaW9uX2lkPTFfTVg0ME56TXdNVGM1Tkg1LU1UWXlPVEl5TmpNeU9EazNNMzRyWlhGVE1EaG9ZbUYxWlU5VFMzSXhPRzUzWTNsYWFVVi1mZyZjcmVhdGVfdGltZT0xNjI5MjI2MzI5Jm5vbmNlPTAuMTYxOTY4ODA0Mzc2MjU1OTQmcm9sZT1wdWJsaXNoZXImZXhwaXJlX3RpbWU9MTYzMTczMTkyOCZpbml0aWFsX2xheW91dF9jbGFzc19saXN0PQ==';
+  String _tokboxSessionId = '2_MX40NzMwMTc5NH5-MTYyOTgxNzY0NDM5N35raWNsMWFmWjJnUXFmQ3UwN2xyZkRjbWJ-fg';
+  String _tokboxToken = 'T1==cGFydG5lcl9pZD00NzMwMTc5NCZzaWc9YTQyNDE2Zjg5NWZkN2JhZjcyM2FiZjQ5MDQ4ODEyYzU3YjU3NThlNzpzZXNzaW9uX2lkPTJfTVg0ME56TXdNVGM1Tkg1LU1UWXlPVGd4TnpZME5ETTVOMzVyYVdOc01XRm1XakpuVVhGbVEzVXdOMnh5WmtSamJXSi1mZyZjcmVhdGVfdGltZT0xNjI5ODE3NjQ0Jm5vbmNlPTAuMTgzNzUyMTQzMjM3ODIxNTImcm9sZT1wdWJsaXNoZXImZXhwaXJlX3RpbWU9MTYzMjMyMzI0NCZpbml0aWFsX2xheW91dF9jbGFzc19saXN0PQ==';
   String _tokboxApiKey = '47301794';
   String _publishId = 'PublishId';
 
@@ -48,11 +48,11 @@ class _MyAppState extends State<MyApp> {
       _sessionInited = true;
       _isPublishing = false;
     });
-    print(result);
+    print(result.status);
   }
 
   Future<void> _publishStream() async {
-    String ret = await VonageVideoChat.publishStream("Jõao");
+    var ret = await VonageVideoChat.publishStream("Jõao");
     setState(() {
       _isPublishing = true;
     });
@@ -92,47 +92,6 @@ class _MyAppState extends State<MyApp> {
         _camareEnabled = !_camareEnabled;
       });
     }
-  }
-
-
-  Widget _videoChat(var Context){
-    String viewType = 'flutter-vonage-video-chat';
-    Map<String, dynamic> creationParams = <String, dynamic> {};
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return PlatformViewLink(
-        viewType: viewType,
-        surfaceFactory: (BuildContext context, PlatformViewController controller) {
-          
-          return AndroidViewSurface(
-            controller: controller,
-            gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{},
-            hitTestBehavior: PlatformViewHitTestBehavior.opaque,
-          );
-        },
-        onCreatePlatformView: (PlatformViewCreationParams params) {
-          return PlatformViewsService.initSurfaceAndroidView(
-            id: params.id,
-            viewType: viewType,
-            layoutDirection: TextDirection.ltr,
-            creationParams: creationParams,
-            creationParamsCodec: StandardMessageCodec(),
-          )
-          ..addOnPlatformViewCreatedListener(params.onPlatformViewCreated)
-          ..create();
-        },
-      );
-    } else if(defaultTargetPlatform == TargetPlatform.iOS) {
-      return UiKitView(
-        viewType: viewType,
-        layoutDirection: TextDirection.ltr,
-        creationParams: creationParams,
-        creationParamsCodec: const StandardMessageCodec(),
-        onPlatformViewCreated: (int id) {
-          _pluginViewId = id;
-        },
-      );
-    }
-    return Container();
   }
 
   @override

@@ -38,11 +38,13 @@ class VonageVideoChat {
     }
   }
 
-  static Future<String> publishStream(String publisherName) async {
+  static Future<bool> publishStream(String publisherName) async {
     try {
-      return await _channel.invokeMethod('publishStream', { "name": publisherName });
-    } on PlatformException {
-      return "error";
+      final result = await _channel.invokeMethod('publishStream', { "name": publisherName });
+      return result["success"] == true;
+    } on PlatformException catch (err) {
+      print(err);
+      return false;
     }
   }
 
