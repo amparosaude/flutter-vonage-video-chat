@@ -22,24 +22,7 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="cd55b504-7bac-448f-b4b5-572cf08f2afc" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vonage.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/android/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/android/src/main/res/drawable/ic_baseline_videocam_off_24.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/android/src/main/res/drawable/ic_baseline_volume_off_24.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/android/src/main/res/drawable/ic_baseline_volume_up_24.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/android/src/main/res/layout/no_camera.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/example_lib_main_dart.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/src/main/java/br/com/mesainc/vonage/VonagePlugin.java" beforeDir="false" afterPath="$PROJECT_DIR$/android/src/main/java/br/com/mesainc/vonage/VonagePlugin.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/example/android/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/example/android/app/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/vonage_video_chat.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/vonage_video_chat.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/vonage.iml" beforeDir="false" afterPath="$PROJECT_DIR$/vonage.iml" afterDir="false" />
-    </list>
+    <list default="true" id="cd55b504-7bac-448f-b4b5-572cf08f2afc" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
