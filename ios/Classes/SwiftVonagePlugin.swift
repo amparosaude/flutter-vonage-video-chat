@@ -4,14 +4,28 @@ import OpenTok
 
 public class SwiftVonagePlugin: NSObject, FlutterPlugin {
     var nativeView: FlutterPlatformView?
-    var nativeViewFactory: FLNativeViewFactory?
+    var nativePublisherViewFactory: FLNativeViewFactory?
+    var nativeSubscriberViewFactory: FLNativeViewFactory?
     var session: OTSession?
     var publisher: OTPublisher?
+    var subscriber: OTSubscriber?
     var sessionEvent: FlutterEventChannel?
     var hasStreamEvent: FlutterEventChannel?
     var sessionHandler = SessionHandlerStream()
     var hasStreamHandler = HasStreamHandler()
+    var subscriberStream: OTStream?
+    var subscriberNoCameraImageView: UIView?
+    var volumeOnView: UIView?
+    var volumeOffView: UIView?
     
+    private var subscriberNoCameraViewTag = 100
+    private var subscriberVolumeOnTag = 110
+    private var subscriberVolumeOffTag = 111
+    
+    private var pluginCodeLog = "Vonage-video-chat"
+    
+    private var subscriberAudioStatus : Bool?
+    private var subscriberVideoStatus : Bool?
     
     public init(with registrar: FlutterPluginRegistrar) {
         super.init()
@@ -21,9 +35,55 @@ public class SwiftVonagePlugin: NSObject, FlutterPlugin {
         registrar.addMethodCallDelegate(self, channel: channel)
         initEvents()
         let factory = FLNativeViewFactory(messenger: registrar.messenger())
-        nativeViewFactory = factory
-        print ("init nativeView", nativeViewFactory)
-        registrar.register(factory, withId: "flutter-vonage-video-chat")
+        nativePublisherViewFactory = factory
+        let factorySubscriber = FLNativeViewFactory(messenger: registrar.messenger())
+        nativeSubscriberViewFactory = factorySubscriber
+        print ("init nativeView", nativePublisherViewFactory)
+        registrar.register(factory, withId: "flutter-vonage-publisher-view")
+        registrar.register(factorySubscriber, withId: "flutter-vonage-subscriber-view")
+        initScreens()
+    }
+    
+    func initScreens(){
+        subscriberNoCameraImageView = child.view
+        let videoCamOff = UIImage(named: "videocam_off")?
+            .withRenderingMode(.alwaysTemplate)
+            .withTintColor(.white)
+        let soundEnabled = UIImage(named: "volume_on")?
+            .withRenderingMode(.alwaysOriginal)
+            .withTintColor(.white)
+        let soundDisabled = UIImage(named: "volume_off")?
+            .withRenderingMode(.alwaysOriginal)
+            .withTintColor(.white)
+        let videoOffView = UIImageView(image: videoCamOff!)
+        videoOffView.tintColor = .white
+        videoOffView.frame = UIScreen.main.bounds
+        videoOffView.contentMode = .scaleAspectFit
+        subscriberNoCameraImageView!.addSubview(videoOffView)
+        let volumeOnView = UIImageView(image: soundEnabled!)
+        volumeOnView.tintColor = .white
+        volumeOnView.frame = CGRect(
+            x: volumeOnView.frame.origin.x + 20,
+            y: volumeOnView.frame.origin.y + 20,
+            width: volumeOnView.frame.width,
+            height: volumeOnView.frame.height
+            )
+        self.volumeOnView = volumeOnView
+        
+        let volumeOffView = UIImageView(image: soundDisabled!)
+        volumeOffView.tintColor = .white
+        volumeOffView.frame = CGRect(
+            x: volumeOffView.frame.origin.x + 20,
+            y: volumeOffView.frame.origin.y + 20,
+            width: volumeOffView.frame.width,
+            height: volumeOffView.frame.height
+            )
+        self.volumeOffView = volumeOffView
+        
+        volumeOnView.tag = subscriberVolumeOnTag
+        subscriberNoCameraImageView!.addSubview(volumeOnView)
+        
+        
     }
     
     public func initEvents(){
@@ -83,37 +143,43 @@ public class SwiftVonagePlugin: NSObject, FlutterPlugin {
     }
 
     func publishStream(name: String, result: FlutterResult) {
-        let settings = OTPublisherSettings()
-      // settings.name = UIDevice.current.name
-      settings.name = name
-      publisher = OTPublisher(delegate: self, settings: settings)
+        var resultDic = ["success" : false]
+        do{
+          
+          let settings = OTPublisherSettings()
+          settings.name = name
+          publisher = OTPublisher(delegate: self, settings: settings)
 
-      var error: OTError?
-        session?.publish(publisher!, error: &error)
-      guard error == nil else {
-        print(error!)
-        return
-      }
+          var error: OTError?
+            session?.publish(publisher!, error: &error)
+          guard error == nil else {
+            print(error!)
+            result(FlutterError(code: pluginCodeLog, message: error!.description, details: nil))
+            return
+          }
 
-      // print ("publishStream", SwiftFlutterVonageVideoPlugin.nativeView)
-      // var view: UIView = SwiftFlutterVonageVideoPlugin.nativeView!.view()
-      var view: UIView = nativeViewFactory!.getView()
-      print ("publishStream", nativeViewFactory, view)
-      // print ("publishStream", viewId)
-      // var view: UIView = nativeView!.view()
+          var view: UIView = nativePublisherViewFactory!.getView()
+          print ("publishStream", nativePublisherViewFactory, view)
 
-        guard let publisherView = publisher?.view else {
-        return
-      }
+          guard let publisherView = publisher?.view else {
+            return
+          }
 
-      // let screenBounds = UIScreen.main.bounds
-      // publisherView.frame = CGRect(x: screenBounds.width - 150 - 20, y: screenBounds.height - 150 - 20, width: 150, height: 150)
-      publisherView.frame = view.bounds
+          // let screenBounds = UIScreen.main.bounds
+          // publisherView.frame = CGRect(x: screenBounds.width - 150 - 20, y: screenBounds.height - 150 - 20, width: 150, height: 150)
+          publisherView.frame = view.bounds
 
-      view.addSubview(publisherView)
-      // view.backgroundColor = UIColor.red
+          view.addSubview(publisherView)
+          // view.backgroundColor = UIColor.red
 
-        result("")
+          resultDic["success"] = true
+            
+        } catch {
+            result(FlutterError(
+                code: pluginCodeLog, message: "Error in plublisher function", details: nil
+            ))
+        }
+        result(resultDic)
     }
 
     func unpublishStream(result: FlutterResult) {
@@ -181,19 +247,105 @@ public class SwiftVonagePlugin: NSObject, FlutterPlugin {
       }
 
       public func session(_ session: OTSession, streamCreated stream: OTStream) {
-          print("A stream was created in the session.")
+        print("A stream was created in the session.")
+        
+        subscriber = OTSubscriber(stream: stream, delegate: self)
+        guard let subscriber = subscriber else {
+            return
+        }
+        subscriberStream = stream
+        var error: OTError?
+        
+        session.subscribe(subscriber, error: &error)
+        guard error == nil else {
+            print(error!)
+            return
+        }
+        
+        guard let subscriberView = subscriber.view else {
+            return
+        }
+        subscriberAudioStatus = stream.hasAudio
+        subscriberVideoStatus = stream.hasVideo
+        var view: UIView = nativeSubscriberViewFactory!.getView()
+        subscriberView.frame = UIScreen.main.bounds
+        view.addSubview(subscriberView)
+        subscriber.audioLevelDelegate = self
+        hasStreamHandler.hasStreamChange(value: true)
       }
 
       public func session(_ session: OTSession, streamDestroyed stream: OTStream) {
           print("A stream was destroyed in the session.")
+        hasStreamHandler.hasStreamChange(value: false)
       }
+    
+    
   }
+extension SwiftVonagePlugin: OTSubscriberKitAudioLevelDelegate{
+    public func subscriber(_ subscriber: OTSubscriberKit, audioLevelUpdated audioLevel: Float) {
+        var newStatus : Bool
+        
+        if audioLevel.isZero {
+            newStatus = false
+        } else {
+            newStatus = true
+        }
+        if(subscriberAudioStatus != nil && newStatus != subscriberAudioStatus){
+            let view: UIView = subscriberNoCameraImageView!
+            if let viewToRemove = view.viewWithTag(subscriberAudioStatus! ? subscriberVolumeOnTag : subscriberVolumeOffTag) {
+                viewToRemove.removeFromSuperview()
+            } else {
+                print("volume image not found in view")
+            }
+            var newView: UIView
+            if(newStatus){
+                newView = volumeOnView!
+                newView.tag = subscriberVolumeOnTag
+            } else {
+                newView = volumeOffView!
+                newView.tag = subscriberVolumeOffTag
+            }
+            view.addSubview(newView)
+            subscriberAudioStatus = newStatus
+        }
+//        print("Subscriber - Audio - ",audioLevel.isZero ? "disable" : "enable")
+    }
+    
+}
 
-  extension SwiftVonagePlugin: OTPublisherDelegate {
-      public func publisher(_ publisher: OTPublisherKit, didFailWithError error: OTError) {
-          print("The publisher failed: \(error)")
-      }
-  }
+extension SwiftVonagePlugin: OTPublisherDelegate {
+    public func publisher(_ publisher: OTPublisherKit, didFailWithError error: OTError) {
+      print("The publisher failed: \(error)")
+    }
+}
+
+extension SwiftVonagePlugin: OTSubscriberDelegate {
+    public func subscriberDidConnect(toStream subscriber: OTSubscriberKit) {
+        print("The subscriber did connect to the stream")
+    }
+    
+    public func subscriber(_ subscriber: OTSubscriberKit, didFailWithError error: OTError) {
+        print("The subscriber failed to connect to the stream")
+    }
+    
+    public func subscriberVideoEnabled(_ subscriber: OTSubscriberKit, reason: OTSubscriberVideoEventReason) {
+        print("Subscriber - Video - Enabled")
+        let view: UIView = nativeSubscriberViewFactory!.getView()
+        if let noCameraView = view.viewWithTag(subscriberNoCameraViewTag) {
+            noCameraView.removeFromSuperview()
+        } else {
+            
+        }
+        
+    }
+    
+    public func subscriberVideoDisabled(_ subscriber: OTSubscriberKit, reason: OTSubscriberVideoEventReason) {
+        print("Subscriber - Video - Disabled")
+        let view: UIView = nativeSubscriberViewFactory!.getView()
+        subscriberNoCameraImageView?.tag = subscriberNoCameraViewTag
+        view.addSubview(subscriberNoCameraImageView!)
+    }
+}
 
 class SessionHandlerStream: NSObject, FlutterStreamHandler {
     private var _eventSink: FlutterEventSink?
