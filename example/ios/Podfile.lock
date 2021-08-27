@@ -29,7 +29,7 @@ SPEC CHECKSUMS:
   Flutter: 434fef37c0980e73bb6479ef766c45957d4b510c
   OpenTok: 62dd91a1297816f61a5e5c91e6ff4ecdffa77364
   permission_handler: ccb20a9fad0ee9b1314a52b70b76b473c5f8dab0
-  vonage: df279b6082050d71453b91c10b4c9263c1b778eb
+  vonage: 5a8ae1a69e3c0db66d95e70a20e8d4cf0e24bc04
 
 PODFILE CHECKSUM: 16c88b22f44cc827e04bea0546ae44dc08b942ec
 

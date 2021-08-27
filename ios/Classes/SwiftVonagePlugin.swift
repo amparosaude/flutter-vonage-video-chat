@@ -150,36 +150,34 @@ public class SwiftVonagePlugin: NSObject, FlutterPlugin {
           settings.name = name
           publisher = OTPublisher(delegate: self, settings: settings)
 
-          var error: OTError?
-            session?.publish(publisher!, error: &error)
-          guard error == nil else {
-            print(error!)
-            result(FlutterError(code: pluginCodeLog, message: error!.description, details: nil))
-            return
-          }
-
           var view: UIView = nativePublisherViewFactory!.getView()
           print ("publishStream", nativePublisherViewFactory, view)
 
           guard let publisherView = publisher?.view else {
+            result(FlutterError(code: pluginCodeLog, message: "Cannot get publisher view", details: nil))
             return
           }
 
-          // let screenBounds = UIScreen.main.bounds
-          // publisherView.frame = CGRect(x: screenBounds.width - 150 - 20, y: screenBounds.height - 150 - 20, width: 150, height: 150)
           publisherView.frame = view.bounds
 
           view.addSubview(publisherView)
-          // view.backgroundColor = UIColor.red
+            
+            var error: OTError?
+              session?.publish(publisher!, error: &error)
+            guard error == nil else {
+              print(error!)
+              result(FlutterError(code: pluginCodeLog, message: error!.description, details: nil))
+              return
+            }
 
           resultDic["success"] = true
             
+          result(resultDic)
         } catch {
             result(FlutterError(
                 code: pluginCodeLog, message: "Error in plublisher function", details: nil
             ))
         }
-        result(resultDic)
     }
 
     func unpublishStream(result: FlutterResult) {
@@ -235,11 +233,19 @@ public class SwiftVonagePlugin: NSObject, FlutterPlugin {
 
   extension SwiftVonagePlugin: OTSessionDelegate {
       public func sessionDidConnect(_ session: OTSession) {
-          print("The client connected to the OpenTok session.")
+          print(pluginCodeLog,"The client connected to the OpenTok session.")
       }
 
       public func sessionDidDisconnect(_ session: OTSession) {
-          print("The client disconnected from the OpenTok session.")
+          print(pluginCodeLog,"The client disconnected from the OpenTok session.")
+        nativePublisherViewFactory?.getView().subviews.forEach({ v in
+            v.removeFromSuperview()
+        })
+        nativeSubscriberViewFactory?.getView().subviews.forEach({ v in
+            v.removeFromSuperview()
+        })
+        print(nativePublisherViewFactory?.getView().subviews.count)
+        print(nativeSubscriberViewFactory?.getView().subviews.count)
       }
 
       public func session(_ session: OTSession, didFailWithError error: OTError) {
@@ -272,6 +278,15 @@ public class SwiftVonagePlugin: NSObject, FlutterPlugin {
         view.addSubview(subscriberView)
         subscriber.audioLevelDelegate = self
         hasStreamHandler.hasStreamChange(value: true)
+        if(publisher != nil){
+            var error: OTError?
+              session.publish(publisher!, error: &error)
+            guard error == nil else {
+              print(error!)
+              return
+            }
+        }
+        
       }
 
       public func session(_ session: OTSession, streamDestroyed stream: OTStream) {
@@ -316,6 +331,10 @@ extension SwiftVonagePlugin: OTSubscriberKitAudioLevelDelegate{
 extension SwiftVonagePlugin: OTPublisherDelegate {
     public func publisher(_ publisher: OTPublisherKit, didFailWithError error: OTError) {
       print("The publisher failed: \(error)")
+    }
+    
+    public func publisher(_ publisher: OTPublisherKit, streamDestroyed stream: OTStream) {
+        
     }
 }
 
