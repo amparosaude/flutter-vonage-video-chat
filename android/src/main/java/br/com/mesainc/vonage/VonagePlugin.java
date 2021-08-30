@@ -126,6 +126,12 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
       } else {
         result.error("disableCamera Error","Publisher not initialized",null);
       }
+    } else if (call.method.equals("setSubscriberAudio")) {
+      if(setSubscriberAudio(call.argument("status"))){
+        result.success(true);
+      } else {
+        result.error("setSubscriberAudio Error", "Subscriber not initialized", null);
+      }
     } else {
       result.notImplemented();
     }
@@ -314,6 +320,15 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
       result = true;
       publisherViewContainer.addView(noCameraView);
       //publisherSingleViewContainer.addView(noCameraView);
+    }
+    return result;
+  }
+
+  private boolean setSubscriberAudio(boolean value){
+    boolean result = false;
+    if(mSubscriber != null) {
+      mSubscriber.setSubscribeToAudio(value);
+      result = true;
     }
     return result;
   }

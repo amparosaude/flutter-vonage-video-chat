@@ -117,5 +117,17 @@ class VonageVideoChat {
     }
     return result;
   }
+  /// Enable and disabled the subscriber audio, if subscriber is connected
+  /// ```dart
+  /// setSubscriberAudioStatus(true);// enable audio
+  /// setSubscriberAudioStatus(false);// disabled audio
+  /// ```
+  static Future<void> setSubscriberAudioStatus(bool status) async{
+    try {
+      await _channel.invokeMethod('setSubscriberAudio',{ 'status' : status});
+    } catch (err){
+      print(err);
+    }
+  } 
 }
 
