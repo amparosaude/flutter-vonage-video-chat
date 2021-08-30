@@ -194,9 +194,10 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
 
   }
 
-  private String publishStream(String name) {
-    try {
+  private HashMap<String,Object> publishStream(String name) {
+    HashMap<String,Object> result = new HashMap<String,Object>();
 
+    try {
       mPublisher = new Publisher.Builder(mContext).name(name).build();
       mPublisher.setPublisherListener(this);
       View v = mPublisher.getView();
@@ -207,10 +208,13 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
         publisherViewContainer.addView(v);
       }
       mSession.publish(mPublisher);
+      result.put("success",true);
     } catch (Exception error){
+      result.put("success",false);
       Log.e(LOG_TAG,"publishStream - "+error.toString());
+    } finally {
+      return result;
     }
-    return "";
   }
 
   private String unpublishStream() {
