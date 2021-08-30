@@ -15,9 +15,11 @@ public class SwiftVonagePlugin: NSObject, FlutterPlugin {
     var hasStreamHandler = HasStreamHandler()
     var subscriberStream: OTStream?
     var subscriberNoCameraImageView: UIView?
+    var publisherNoCameraImageView: UIView?
     var volumeOnView: UIView?
     var volumeOffView: UIView?
     
+    private var publisherNoCameraViewTag = 99
     private var subscriberNoCameraViewTag = 100
     private var subscriberVolumeOnTag = 110
     private var subscriberVolumeOffTag = 111
@@ -45,7 +47,9 @@ public class SwiftVonagePlugin: NSObject, FlutterPlugin {
     }
     
     func initScreens(){
-        subscriberNoCameraImageView = child.view
+//        let publisherView = nativePublisherViewFactory!.getView()
+        subscriberNoCameraImageView = subscriberNoCameraChild.view
+        publisherNoCameraImageView = publisherNoCameraChild.view
         let videoCamOff = UIImage(named: "videocam_off")?
             .withRenderingMode(.alwaysTemplate)
             .withTintColor(.white)
@@ -214,6 +218,9 @@ public class SwiftVonagePlugin: NSObject, FlutterPlugin {
     func enableCamera(result: FlutterResult){
         if(publisher != nil){
             publisher!.publishVideo = true
+            let view: UIView = nativePublisherViewFactory!.getView()
+            let noCameraView = view.viewWithTag(publisherNoCameraViewTag)
+            noCameraView?.removeFromSuperview()
             result(true)
         } else {
             result(FlutterError(code: "Enable Camera Error", message: "Publisher is not initialized", details: nil))
@@ -223,6 +230,20 @@ public class SwiftVonagePlugin: NSObject, FlutterPlugin {
     
     func disableCamera(result: FlutterResult){
         if(publisher != nil){
+            let view: UIView = nativePublisherViewFactory!.getView()
+            let noCameraView = publisherNoCameraImageView
+            let videoCamOff = UIImage(named: "videocam_off")?
+                .withRenderingMode(.alwaysTemplate)
+                .withTintColor(.white)
+            let noCameraImageView = UIImageView(image: videoCamOff)
+            noCameraImageView.frame = view.bounds
+            noCameraImageView.tintColor = .white
+            noCameraImageView.contentMode = .scaleAspectFit
+            noCameraView?.addSubview(noCameraImageView)
+            noCameraView?.frame = view.bounds
+            noCameraView?.contentMode = .scaleAspectFill
+            noCameraView?.tag = publisherNoCameraViewTag
+            view.addSubview(noCameraView!)
             publisher!.publishVideo = false
             result(true)
         } else {

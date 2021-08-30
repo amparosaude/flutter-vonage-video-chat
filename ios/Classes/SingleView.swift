@@ -8,7 +8,9 @@ struct SingleView : View {
     }
 }
 
-var child = UIHostingController(rootView: SingleView())
+var subscriberNoCameraChild = UIHostingController(rootView: SingleView())
+
+var publisherNoCameraChild = UIHostingController(rootView: SingleView())
 
 struct SingleView_Preview: PreviewProvider {
     static var previews: some View {
