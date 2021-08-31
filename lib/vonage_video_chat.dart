@@ -10,9 +10,43 @@ class VonageVideoChat {
   static const EventChannel _event = const EventChannel('vonage-video-chat-session');
   static const EventChannel _hasStream = const EventChannel('vonage-video-chat-hasStream');
 
+  /// Listinner from session status, the type of return is [bool].
+  /// 
+  /// ```dart
+  /// StreamBuilder(
+  ///   stream: sessionStream
+  ///   builder: (ctx,hasSession){
+  ///     ...
+  ///     if(hasSession){
+  ///        // Session has initialize
+  ///     } else {
+  ///        // Session not initialize  
+  ///     }
+  ///     ...
+  ///   }
+  /// )
+  /// ```
   Stream get sessionStream => _event.receiveBroadcastStream();
+  /// Listinner from subscriber status, the type of return is [bool].
+  /// 
+  /// ```dart
+  /// StreamBuilder(
+  ///   stream: sessionStream
+  ///   builder: (ctx,subscriberStatus){
+  ///     ...
+  ///     if(subscriberStatus){
+  ///        // Subscriber has connected
+  ///     } else {
+  ///        // Subscriber disconected 
+  ///     }
+  ///     ...
+  ///   }
+  /// )
+  /// ```
   Stream get hasStream => _hasStream.receiveBroadcastStream();
-
+  /// Use a [Session] to use initialized session to OpenTok.
+  /// 
+  /// Return a [SessionResponse] value.
   static Future<SessionResponse> initSession(Session session) async {
     print ('initSession');
     bool havePermissions = await checkPermissions();
@@ -28,7 +62,7 @@ class VonageVideoChat {
     print("permissions not granted");
     return SessionResponse(false);
   }
-
+  /// Close the OpenTok session.
   static Future<String> endSession() async {
     print ('endSession');
     try {
@@ -37,7 +71,11 @@ class VonageVideoChat {
       return "error";
     }
   }
-
+  /// Initialized the publisher from OpenTok session.
+  /// 
+  /// Use this function after call [initSession] function.
+  /// 
+  /// Case this session is not initialized, results in false.
   static Future<bool> publishStream(String publisherName) async {
     try {
       final result = await _channel.invokeMethod('publishStream', { "name": publisherName });
