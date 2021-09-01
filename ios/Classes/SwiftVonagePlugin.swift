@@ -122,6 +122,10 @@ public class SwiftVonagePlugin: NSObject, FlutterPlugin {
             enableCamera(result: result)
         } else if call.method == "disableCamera" {
             disableCamera(result: result)
+        } else if call.method == "setSubscriberAudio" {
+            var args = call.arguments as! Dictionary<String, Any>
+            var status: Bool = args["status"] as! Bool
+            setSubscriberAudio(result: result, value: status)
         } else {
           result("iOS " + UIDevice.current.systemVersion)
       }
@@ -248,6 +252,15 @@ public class SwiftVonagePlugin: NSObject, FlutterPlugin {
             result(true)
         } else {
             result(FlutterError(code: "Enable Camera Error", message: "Publisher is not initialized", details: nil))
+        }
+    }
+    
+    func setSubscriberAudio(result: FlutterResult,value: Bool){
+        if(subscriber == nil) {
+            result(FlutterError(code: "Set Subscriber Audio", message: "Subscriber is not initialized", details:nil))
+        } else {
+            subscriber!.subscribeToAudio = value
+            result(true)
         }
     }
   }
