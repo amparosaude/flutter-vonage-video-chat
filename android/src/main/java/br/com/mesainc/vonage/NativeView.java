@@ -1,6 +1,8 @@
 package br.com.mesainc.vonage;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.util.Log;
 import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;

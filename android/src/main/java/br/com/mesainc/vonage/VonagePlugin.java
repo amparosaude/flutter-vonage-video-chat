@@ -74,16 +74,13 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
 
     nativePublisherView = new NativeViewFactory();
     nativeSubscriberView = new NativeViewFactory();
-    /*flutterPluginBinding.getPlatformViewRegistry()
-            .registerViewFactory("flutter-vonage-video-chat", nativeVonageView);*/
     flutterPluginBinding.getPlatformViewRegistry()
             .registerViewFactory("flutter-vonage-publisher-view", nativePublisherView);
     flutterPluginBinding.getPlatformViewRegistry()
             .registerViewFactory("flutter-vonage-subscriber-view", nativeSubscriberView);
-    //vonageView = View.inflate(mContext, R.layout.vonage_view, null);
 
-    publisherSingleView = LayoutInflater.from(mContext).inflate(R.layout.single_view,null,false);
-    subscriberSingleView = LayoutInflater.from(mContext).inflate(R.layout.single_view,null,false);
+    publisherSingleView = (View) LayoutInflater.from(mContext).inflate(R.layout.single_view,null,true);
+    subscriberSingleView = (View) LayoutInflater.from(mContext).inflate(R.layout.single_view,null,false);
     noCameraView = View.inflate(mContext,R.layout.no_camera,null);
     noCameraSubscriberView = View.inflate(mContext,R.layout.no_camera,null);
     soundEnabledSubscriber = noCameraSubscriberView.findViewById(R.id.sound_enable);
@@ -183,6 +180,9 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
       }*/
       if(nativePublisherView.platformView != null) {
         nativePublisherView.getView().removeAllViews();
+        if(publisherSingleView == null){
+          publisherSingleView = (View) LayoutInflater.from(mContext).inflate(R.layout.single_view,null,false);
+        }
         nativePublisherView.getView().addView(publisherSingleView);
       }
       if(nativeSubscriberView.platformView != null) {
@@ -339,16 +339,16 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
     Log.i(LOG_TAG, "Session Connected");
 
     hasSession.changeSession(true);
-
+    /*
     if(publisherViewContainer == null) {
       publisherViewContainer = vonageView.findViewById(R.id.publisher_container);
-    }/*
+    }
     if(publisherSingleViewContainer == null){
      // publisherSingleViewContainer = publisherSingleView.findViewById(R.id.single_frame);
-    }*/
+    }
     if(subscriberViewContainer == null){
       subscriberViewContainer = vonageView.findViewById(R.id.subscriber_container);
-    }
+    }*/
   }
 
   @Override
