@@ -15,12 +15,14 @@ class FLNativeViewFactory: NSObject, FlutterPlatformViewFactory {
         viewIdentifier viewId: Int64,
         arguments args: Any?
     ) -> FlutterPlatformView {
-        platformView = FLNativeView(
-            frame: frame,
-            viewIdentifier: viewId,
-            arguments: args,
-            binaryMessenger: messenger
-        )
+        if(platformView == nil){
+            platformView = FLNativeView(
+                frame: frame,
+                viewIdentifier: viewId,
+                arguments: args,
+                binaryMessenger: messenger
+            )
+        }
         return platformView!
     }
 
