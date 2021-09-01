@@ -269,17 +269,13 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
   private void renderView(){
     Log.d(LOG_TAG,"render-view");
     subscribingStream();
-    /*
-    if(nativePublisherView.getView() != null && mPublisher != null && publisherViewContainer != null && publisherViewContainer.getParent() != null) {
-      publisherViewContainer.removeView(mPublisher.getView());
-      publisherViewContainer.addView(mPublisher.getView());
-    }
-    */
+    checkingPublisherView();
+  }
+
+  private void checkingPublisherView(){
     if(mPublisher != null) {
-      View v = mPublisher.getView();
       if (publisherViewContainer != null) {
-        publisherViewContainer.removeView(v);
-        publisherViewContainer.addView(v);
+        publisherSingleView.bringToFront();
       }
     }
   }
@@ -370,7 +366,14 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
 
     mSubscriber = new Subscriber.Builder(mContext, stream).build();
     mSubscriber.getRenderer().setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE, BaseVideoRenderer.STYLE_VIDEO_FILL);
-    Log.d(LOG_TAG,mPublisher.toString());
+
+    if(mSubscriber.getSubscribeToAudio()){
+      subscriberAudioEnabled = true;
+      soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_up_24);
+    } else {
+      subscriberAudioEnabled = false;
+      soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_off_24);
+    }
 
     mSubscriber.setVideoListener(new SubscriberKit.VideoListener() {
       @Override
@@ -400,6 +403,18 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
       @Override
       public void onVideoDisableWarningLifted(SubscriberKit subscriberKit) {
 
+      }
+    });
+    mSubscriber.setAudioLevelListener(new SubscriberKit.AudioLevelListener() {
+      @Override
+      public void onAudioLevelUpdated(SubscriberKit subscriberKit, float v) {
+        if(subscriberAudioEnabled && v == 0){
+          subscriberAudioEnabled = false;
+          soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_off_24);
+        } else if(!subscriberAudioEnabled && v > 0){
+          subscriberAudioEnabled = true;
+          soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_up_24);
+        }
       }
     });
     subscriberCameraStatus = true;
@@ -452,12 +467,14 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
 
   @Override
   public void onAudioEnabled(SubscriberKit subscriberKit) {
+    Log.d(LOG_TAG,"subscriber onAudioEnabled");
     subscriberAudioEnabled = true;
     soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_up_24);
   }
 
   @Override
   public void onAudioDisabled(SubscriberKit subscriberKit) {
+    Log.d(LOG_TAG,"subscriber onAudioDisabled");
     subscriberAudioEnabled = false;
     soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_off_24);
   }
