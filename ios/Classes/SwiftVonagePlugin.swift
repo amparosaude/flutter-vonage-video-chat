@@ -141,7 +141,6 @@ public class SwiftVonagePlugin: NSObject, FlutterPlugin {
       } else {
           resultDic["success"] = true
       }
-      sessionHandler.sessionChange(value: resultDic["success"] ?? false)
       result(resultDic)
     }
 
@@ -190,7 +189,8 @@ public class SwiftVonagePlugin: NSObject, FlutterPlugin {
 
     func unpublishStream(result: FlutterResult) {
         if publisher != nil {
-            session?.unpublish(publisher!)
+            session?.disconnect(nil)
+            sessionHandler.sessionChange(value : false)
         }
 
         // TODO - get typing errors..
@@ -268,6 +268,8 @@ public class SwiftVonagePlugin: NSObject, FlutterPlugin {
   extension SwiftVonagePlugin: OTSessionDelegate {
       public func sessionDidConnect(_ session: OTSession) {
           print(pluginCodeLog,"The client connected to the OpenTok session.")
+        
+        sessionHandler.sessionChange(value: true)
       }
 
       public func sessionDidDisconnect(_ session: OTSession) {
@@ -278,8 +280,8 @@ public class SwiftVonagePlugin: NSObject, FlutterPlugin {
         nativeSubscriberViewFactory?.getView().subviews.forEach({ v in
             v.removeFromSuperview()
         })
-        print(nativePublisherViewFactory?.getView().subviews.count)
-        print(nativeSubscriberViewFactory?.getView().subviews.count)
+        hasStreamHandler.hasStreamChange(value : false)
+        sessionHandler.sessionChange(value: false)
       }
 
       public func session(_ session: OTSession, didFailWithError error: OTError) {
