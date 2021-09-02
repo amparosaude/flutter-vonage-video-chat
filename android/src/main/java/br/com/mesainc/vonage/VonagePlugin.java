@@ -1,14 +1,17 @@
 package br.com.mesainc.vonage;
 
 import android.content.Context;
+import android.os.Build;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
+import androidx.core.view.ViewCompat;
 
 import com.opentok.android.BaseVideoRenderer;
 import com.opentok.android.OpentokError;
@@ -78,9 +81,8 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
             .registerViewFactory("flutter-vonage-publisher-view", nativePublisherView);
     flutterPluginBinding.getPlatformViewRegistry()
             .registerViewFactory("flutter-vonage-subscriber-view", nativeSubscriberView);
-
-    publisherSingleView = (View) LayoutInflater.from(mContext).inflate(R.layout.single_view,null,true);
-    subscriberSingleView = (View) LayoutInflater.from(mContext).inflate(R.layout.single_view,null,false);
+    publisherSingleView = LayoutInflater.from(mContext).inflate(R.layout.single_view,null,false);
+    subscriberSingleView = LayoutInflater.from(mContext).inflate(R.layout.single_view,null,false);
     noCameraView = View.inflate(mContext,R.layout.no_camera,null);
     noCameraSubscriberView = View.inflate(mContext,R.layout.no_camera,null);
     soundEnabledSubscriber = noCameraSubscriberView.findViewById(R.id.sound_enable);
@@ -178,14 +180,13 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
       /*if(nativeVonageView.platformView != null) {
         nativeVonageView.getView().addView(vonageView);
       }*/
-      if(nativePublisherView.platformView != null) {
+      if(nativePublisherView.getView() != null) {
+        if(nativePublisherView.getView().getChildCount()>0)
         nativePublisherView.getView().removeAllViews();
-        if(publisherSingleView == null){
-          publisherSingleView = (View) LayoutInflater.from(mContext).inflate(R.layout.single_view,null,false);
-        }
         nativePublisherView.getView().addView(publisherSingleView);
       }
-      if(nativeSubscriberView.platformView != null) {
+      if(nativeSubscriberView.getView() != null) {
+        if(nativeSubscriberView.getView().getChildCount() > 0)
         nativeSubscriberView.getView().removeAllViews();
         nativeSubscriberView.getView().addView(subscriberSingleView);
       }
@@ -251,12 +252,13 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
 
   private String subscribingStream(){
     try {
-      subscriberViewContainer.removeAllViews();
+
       if (mSubscriber != null && mSubscriber.getView() != null) {
+        if(subscriberViewContainer.getChildCount() > 0) {
+          subscriberViewContainer.removeAllViews();
+        }
         subscriberViewContainer.addView(mSubscriber.getView());
         mSession.subscribe(mSubscriber);
-      } else {
-        subscriberViewContainer.addView(View.inflate(mContext, R.layout.progress, null));
       }
 
     } catch (Exception e){
@@ -269,19 +271,23 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
   private void renderView(){
     Log.d(LOG_TAG,"render-view");
     subscribingStream();
-    /*
-    if(nativePublisherView.getView() != null && mPublisher != null && publisherViewContainer != null && publisherViewContainer.getParent() != null) {
-      publisherViewContainer.removeView(mPublisher.getView());
-      publisherViewContainer.addView(mPublisher.getView());
-    }
-    */
-    if(mPublisher != null) {
-      View v = mPublisher.getView();
-      if (publisherViewContainer != null) {
-        publisherViewContainer.removeView(v);
-        publisherViewContainer.addView(v);
+    checkingPublisherView();
+  }
+
+  private void checkingPublisherView(){
+    try {
+      if(mPublisher != null) {
+        if(Build.VERSION.SDK_INT >= 30) {
+          publisherViewContainer.removeAllViews();
+          publisherViewContainer.addView(mPublisher.getView());
+        } else {
+          publisherViewContainer.bringToFront();
+        }
       }
+    } catch (Exception err) {
+      Log.e(LOG_TAG,err.getMessage());
     }
+
   }
 
   private boolean enableMicrophone(){
@@ -370,7 +376,14 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
 
     mSubscriber = new Subscriber.Builder(mContext, stream).build();
     mSubscriber.getRenderer().setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE, BaseVideoRenderer.STYLE_VIDEO_FILL);
-    Log.d(LOG_TAG,mPublisher.toString());
+
+    if(mSubscriber.getSubscribeToAudio()){
+      subscriberAudioEnabled = true;
+      soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_up_24);
+    } else {
+      subscriberAudioEnabled = false;
+      soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_off_24);
+    }
 
     mSubscriber.setVideoListener(new SubscriberKit.VideoListener() {
       @Override
@@ -400,6 +413,18 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
       @Override
       public void onVideoDisableWarningLifted(SubscriberKit subscriberKit) {
 
+      }
+    });
+    mSubscriber.setAudioLevelListener(new SubscriberKit.AudioLevelListener() {
+      @Override
+      public void onAudioLevelUpdated(SubscriberKit subscriberKit, float v) {
+        if(subscriberAudioEnabled && v == 0){
+          subscriberAudioEnabled = false;
+          soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_off_24);
+        } else if(!subscriberAudioEnabled && v > 0){
+          subscriberAudioEnabled = true;
+          soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_up_24);
+        }
       }
     });
     subscriberCameraStatus = true;
@@ -452,12 +477,14 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
 
   @Override
   public void onAudioEnabled(SubscriberKit subscriberKit) {
+    Log.d(LOG_TAG,"subscriber onAudioEnabled");
     subscriberAudioEnabled = true;
     soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_up_24);
   }
 
   @Override
   public void onAudioDisabled(SubscriberKit subscriberKit) {
+    Log.d(LOG_TAG,"subscriber onAudioDisabled");
     subscriberAudioEnabled = false;
     soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_off_24);
   }
