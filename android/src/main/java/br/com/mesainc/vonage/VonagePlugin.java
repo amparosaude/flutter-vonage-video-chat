@@ -1,14 +1,17 @@
 package br.com.mesainc.vonage;
 
 import android.content.Context;
+import android.os.Build;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
+import androidx.core.view.ViewCompat;
 
 import com.opentok.android.BaseVideoRenderer;
 import com.opentok.android.OpentokError;
@@ -78,9 +81,8 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
             .registerViewFactory("flutter-vonage-publisher-view", nativePublisherView);
     flutterPluginBinding.getPlatformViewRegistry()
             .registerViewFactory("flutter-vonage-subscriber-view", nativeSubscriberView);
-
-    publisherSingleView = (View) LayoutInflater.from(mContext).inflate(R.layout.single_view,null,true);
-    subscriberSingleView = (View) LayoutInflater.from(mContext).inflate(R.layout.single_view,null,false);
+    publisherSingleView = LayoutInflater.from(mContext).inflate(R.layout.single_view,null,false);
+    subscriberSingleView = LayoutInflater.from(mContext).inflate(R.layout.single_view,null,false);
     noCameraView = View.inflate(mContext,R.layout.no_camera,null);
     noCameraSubscriberView = View.inflate(mContext,R.layout.no_camera,null);
     soundEnabledSubscriber = noCameraSubscriberView.findViewById(R.id.sound_enable);
@@ -178,14 +180,13 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
       /*if(nativeVonageView.platformView != null) {
         nativeVonageView.getView().addView(vonageView);
       }*/
-      if(nativePublisherView.platformView != null) {
+      if(nativePublisherView.getView() != null) {
+        if(nativePublisherView.getView().getChildCount()>0)
         nativePublisherView.getView().removeAllViews();
-        if(publisherSingleView == null){
-          publisherSingleView = (View) LayoutInflater.from(mContext).inflate(R.layout.single_view,null,false);
-        }
         nativePublisherView.getView().addView(publisherSingleView);
       }
-      if(nativeSubscriberView.platformView != null) {
+      if(nativeSubscriberView.getView() != null) {
+        if(nativeSubscriberView.getView().getChildCount() > 0)
         nativeSubscriberView.getView().removeAllViews();
         nativeSubscriberView.getView().addView(subscriberSingleView);
       }
@@ -251,12 +252,13 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
 
   private String subscribingStream(){
     try {
-      subscriberViewContainer.removeAllViews();
+
       if (mSubscriber != null && mSubscriber.getView() != null) {
+        if(subscriberViewContainer.getChildCount() > 0) {
+          subscriberViewContainer.removeAllViews();
+        }
         subscriberViewContainer.addView(mSubscriber.getView());
         mSession.subscribe(mSubscriber);
-      } else {
-        subscriberViewContainer.addView(View.inflate(mContext, R.layout.progress, null));
       }
 
     } catch (Exception e){
@@ -273,11 +275,19 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
   }
 
   private void checkingPublisherView(){
-    if(mPublisher != null) {
-      if (publisherViewContainer != null) {
-        publisherSingleView.bringToFront();
+    try {
+      if(mPublisher != null) {
+        if(Build.VERSION.SDK_INT >= 30) {
+          publisherViewContainer.removeAllViews();
+          publisherViewContainer.addView(mPublisher.getView());
+        } else {
+          publisherViewContainer.bringToFront();
+        }
       }
+    } catch (Exception err) {
+      Log.e(LOG_TAG,err.getMessage());
     }
+
   }
 
   private boolean enableMicrophone(){
