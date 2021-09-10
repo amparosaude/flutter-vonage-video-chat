@@ -277,7 +277,7 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
   private void checkingPublisherView(){
     try {
       if(mPublisher != null) {
-        if(Build.VERSION.SDK_INT >= 30) {
+        if(Build.VERSION.SDK_INT >= 28) {
           publisherViewContainer.removeAllViews();
           publisherViewContainer.addView(mPublisher.getView());
         } else {
