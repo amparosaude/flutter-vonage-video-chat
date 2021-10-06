@@ -28,22 +28,40 @@ services:
     links:
       - db_core
       - redis-cache
+      - localstack
     depends_on:
       - db_core
       - redis-cache
-
-  app_core:
-    image: node:12.16.1
+    
+  api_core_jobs:
+    build: ./core.api
     volumes:
-        - ./core.app:/app
-    working_dir: /app
+      - ./core.api:/usr/src/app
+      - /usr/src/app/node_modules
     ports:
-        - 8080:8080
-    command: bash -c "npm run serve"
-    env_file:
-        - ./core.app/.env
+     - 8001:8000
+    env_file: 
+        -  ./core.api/.env
+    command: bash -c "npm run jobs"
+    links:
+      - db_core
+      - redis-cache
+      - localstack
     depends_on:
-        - api_core
+      - api_core
+
+  # app_core:
+  #   image: node:12.16.1
+  #   volumes:
+  #       - ./core.app:/app
+  #   working_dir: /app
+  #   ports:
+  #       - 8080:8080
+  #   command: bash -c "npm run serve"
+  #   env_file:
+  #       - ./core.app/.env
+  #   depends_on:
+  #       - api_core
 
   # PORTAL --------------------------
   db_portal:
@@ -72,17 +90,50 @@ services:
         - db_portal
         - api_core
 
-  app_portal:
-    image: node:12.16.1
-    volumes:
-        - ./portal.app:/app
-    working_dir: /app
+  # app_portal:
+  #   image: node:12.16.1
+  #   volumes:
+  #       - ./portal.app:/app
+  #   working_dir: /app
+  #   ports:
+  #       - 8181:8181
+  #   command: bash -c "npm run dev"
+  #   env_file:
+  #       - ./portal.app/.env
+  #   links:
+  #       - api_portal
+  #   depends_on:
+  #       - api_portal
+
+  # VIDEO --------------------------
+  # app_video:
+  #   image: node:10.15.1
+  #   volumes:
+  #     - ./video.app:/app
+  #   command: bash -c "npm run dev"
+  #   env_file:
+  #       - ./video.app/.env
+  #   working_dir: /app
+  #   ports:
+  #     - '3000:3000'
+  #   environment:
+  #     HOST: 0.0.0.0
+
+  # LOCALSTACK --------------------------
+  localstack:
+    image: localstack/localstack
     ports:
-        - 8181:8181
-    command: bash -c "npm run dev"
-    env_file:
-        - ./portal.app/.env
+      - "4566-4599:4566-4599"
+    environment:
+      - SERVICES=s3,secretsmanager
+      - DATA_DIR=/tmp/localstack/data
+    volumes:
+      - ./core.api/aws:/docker-entrypoint-initaws.d
+    
+  adminer:
+    image: adminer
+    ports:
+        - 9191:8080
     links:
-        - api_portal
-    depends_on:
+        - api_core
         - api_portal

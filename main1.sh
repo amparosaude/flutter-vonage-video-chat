@@ -13,12 +13,18 @@ echo -e
 
 echo "CHECKOUT MASTER - PORTAL.APP"
 cd ../portal.app
-git checkout master
+git checkout main
 git pull
 echo -e 
 
 echo "CHECKOUT MASTER - PORTAL.API"
 cd ../portal.api
+git checkout main
+git pull
+echo -e
+
+echo "CHECKOUT MASTER - VIDEO.APP"
+cd ../video.app
 git checkout master
 git pull
 echo -e
