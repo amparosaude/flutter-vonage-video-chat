@@ -39,8 +39,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 
 /** VonagePlugin.kt */
-public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
-  Session.SessionListener, PublisherKit.PublisherListener, SubscriberKit.StreamListener {
+public class VonagePlugin implements FlutterPlugin, MethodCallHandler, PublisherKit.PublisherListener, SubscriberKit.StreamListener {
   /// The MethodChannel that will the communication between Flutter and native Android
   ///
   /// This local reference serves to register the plugin with the Flutter Engine and unregister it
@@ -160,6 +159,114 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
   private HasSessionEvent hasSession;
   private HasStreamEvent hasStream;
 
+  private Session.SessionListener sessionListener = new Session.SessionListener() {
+    @Override
+    public void onConnected(Session session) {
+      Log.i(LOG_TAG, "onConnected: Connected to session: " + session.getSessionId());
+
+      hasSession.changeSession(true);
+    /*
+    if(publisherViewContainer == null) {
+      publisherViewContainer = vonageView.findViewById(R.id.publisher_container);
+    }
+    if(publisherSingleViewContainer == null){
+     // publisherSingleViewContainer = publisherSingleView.findViewById(R.id.single_frame);
+    }
+    if(subscriberViewContainer == null){
+      subscriberViewContainer = vonageView.findViewById(R.id.subscriber_container);
+    }*/
+    }
+
+    @Override
+    public void onDisconnected(Session session) {
+      Log.i(LOG_TAG, "Session Disconnected");
+      publisherViewContainer.removeAllViews();
+      subscriberViewContainer.removeAllViews();
+      //nativeVonageView.getView().removeAllViews();
+      nativePublisherView.getView().removeAllViews();
+      nativeSubscriberView.getView().removeAllViews();
+      hasSession.changeSession(false);
+    }
+
+    @Override
+    public void onStreamReceived(Session session, Stream stream) {
+      Log.d(LOG_TAG, "onStreamReceived: New Stream Received " + stream.getStreamId() + " in session: " + session.getSessionId());
+
+      hasStream.changeHasStream(true);
+
+      mSubscriber = new Subscriber.Builder(mContext, stream).build();
+      mSubscriber.getRenderer().setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE, BaseVideoRenderer.STYLE_VIDEO_FILL);
+
+      if(mSubscriber.getSubscribeToAudio()){
+        subscriberAudioEnabled = true;
+        soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_up_24);
+      } else {
+        subscriberAudioEnabled = false;
+        soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_off_24);
+      }
+
+      mSubscriber.setVideoListener(new SubscriberKit.VideoListener() {
+        @Override
+        public void onVideoDataReceived(SubscriberKit subscriberKit) {
+          Log.d(LOG_TAG,"onVideoDataReceived");
+        }
+
+        @Override
+        public void onVideoDisabled(SubscriberKit subscriberKit, String s) {
+          Log.d(LOG_TAG,"onVideoDisabled");
+          subscriberViewContainer.addView(noCameraSubscriberView);
+          subscriberCameraStatus = false;
+        }
+
+        @Override
+        public void onVideoEnabled(SubscriberKit subscriberKit, String s) {
+          Log.d(LOG_TAG,"onVideoEnabled");
+          subscriberViewContainer.removeView(noCameraSubscriberView);
+          subscriberCameraStatus = true;
+        }
+
+        @Override
+        public void onVideoDisableWarning(SubscriberKit subscriberKit) {
+          Log.d(LOG_TAG,"onVideoDisableWarning");
+        }
+
+        @Override
+        public void onVideoDisableWarningLifted(SubscriberKit subscriberKit) {
+
+        }
+      });
+      mSubscriber.setAudioLevelListener(new SubscriberKit.AudioLevelListener() {
+        @Override
+        public void onAudioLevelUpdated(SubscriberKit subscriberKit, float v) {
+          if(subscriberAudioEnabled && v == 0){
+            subscriberAudioEnabled = false;
+            soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_off_24);
+          } else if(!subscriberAudioEnabled && v > 0){
+            subscriberAudioEnabled = true;
+            soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_up_24);
+          }
+        }
+      });
+      subscriberCameraStatus = true;
+      if(mPublisher!=null) {
+        mSession.publish(mPublisher);
+      }
+      renderView();
+    }
+
+    @Override
+    public void onStreamDropped(Session session, Stream stream) {
+      Log.i(LOG_TAG, "Stream Dropped");
+      subscriberViewContainer.removeView(mSubscriber.getView());
+      hasStream.changeHasStream(false);
+    }
+
+    @Override
+    public void onError(Session session, OpentokError opentokError) {
+      Log.e(LOG_TAG, "Session error: " + opentokError.getMessage() + " / code :"+opentokError.getErrorCode().toString());
+    }
+  };
+
   private void  initEvents(){
     hasSession = new HasSessionEvent();
     event.setStreamHandler(hasSession);
@@ -182,12 +289,12 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
       }*/
       if(nativePublisherView.getView() != null) {
         if(nativePublisherView.getView().getChildCount()>0)
-        nativePublisherView.getView().removeAllViews();
+          nativePublisherView.getView().removeAllViews();
         nativePublisherView.getView().addView(publisherSingleView);
       }
       if(nativeSubscriberView.getView() != null) {
         if(nativeSubscriberView.getView().getChildCount() > 0)
-        nativeSubscriberView.getView().removeAllViews();
+          nativeSubscriberView.getView().removeAllViews();
         nativeSubscriberView.getView().addView(subscriberSingleView);
       }
       result.put("success",true);
@@ -243,7 +350,7 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
   private Future initializeSession() {
 
     mSession = new Session.Builder(mContext, _apiKey, _sessionId).build();
-    mSession.setSessionListener(this);
+    mSession.setSessionListener(sessionListener);
 
     return executor.submit(()-> {
       mSession.connect(_token);
@@ -337,115 +444,6 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler,
       result = true;
     }
     return result;
-  }
-
-  // SessionListener methods
-  @Override
-  public void onConnected(Session session) {
-    Log.i(LOG_TAG, "Session Connected");
-
-    hasSession.changeSession(true);
-    /*
-    if(publisherViewContainer == null) {
-      publisherViewContainer = vonageView.findViewById(R.id.publisher_container);
-    }
-    if(publisherSingleViewContainer == null){
-     // publisherSingleViewContainer = publisherSingleView.findViewById(R.id.single_frame);
-    }
-    if(subscriberViewContainer == null){
-      subscriberViewContainer = vonageView.findViewById(R.id.subscriber_container);
-    }*/
-  }
-
-  @Override
-  public void onDisconnected(Session session) {
-    Log.i(LOG_TAG, "Session Disconnected");
-    publisherViewContainer.removeAllViews();
-    subscriberViewContainer.removeAllViews();
-    //nativeVonageView.getView().removeAllViews();
-    nativePublisherView.getView().removeAllViews();
-    nativeSubscriberView.getView().removeAllViews();
-    hasSession.changeSession(false);
-  }
-
-  @Override
-  public void onStreamReceived(Session session, Stream stream) {
-    Log.d(LOG_TAG, "onStreamReceived: New Stream Received " + stream.getStreamId() + " in session: " + session.getSessionId());
-
-    hasStream.changeHasStream(true);
-
-    mSubscriber = new Subscriber.Builder(mContext, stream).build();
-    mSubscriber.getRenderer().setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE, BaseVideoRenderer.STYLE_VIDEO_FILL);
-
-    if(mSubscriber.getSubscribeToAudio()){
-      subscriberAudioEnabled = true;
-      soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_up_24);
-    } else {
-      subscriberAudioEnabled = false;
-      soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_off_24);
-    }
-
-    mSubscriber.setVideoListener(new SubscriberKit.VideoListener() {
-      @Override
-      public void onVideoDataReceived(SubscriberKit subscriberKit) {
-        Log.d(LOG_TAG,"onVideoDataReceived");
-      }
-
-      @Override
-      public void onVideoDisabled(SubscriberKit subscriberKit, String s) {
-        Log.d(LOG_TAG,"onVideoDisabled");
-        subscriberViewContainer.addView(noCameraSubscriberView);
-        subscriberCameraStatus = false;
-      }
-
-      @Override
-      public void onVideoEnabled(SubscriberKit subscriberKit, String s) {
-        Log.d(LOG_TAG,"onVideoEnabled");
-        subscriberViewContainer.removeView(noCameraSubscriberView);
-        subscriberCameraStatus = true;
-      }
-
-      @Override
-      public void onVideoDisableWarning(SubscriberKit subscriberKit) {
-        Log.d(LOG_TAG,"onVideoDisableWarning");
-      }
-
-      @Override
-      public void onVideoDisableWarningLifted(SubscriberKit subscriberKit) {
-
-      }
-    });
-    mSubscriber.setAudioLevelListener(new SubscriberKit.AudioLevelListener() {
-      @Override
-      public void onAudioLevelUpdated(SubscriberKit subscriberKit, float v) {
-        if(subscriberAudioEnabled && v == 0){
-          subscriberAudioEnabled = false;
-          soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_off_24);
-        } else if(!subscriberAudioEnabled && v > 0){
-          subscriberAudioEnabled = true;
-          soundEnabledSubscriber.setImageResource(R.drawable.ic_baseline_volume_up_24);
-        }
-      }
-    });
-    subscriberCameraStatus = true;
-    if(mPublisher!=null) {
-      mSession.publish(mPublisher);
-    }
-    renderView();
-  }
-
-  @Override
-  public void onStreamDropped(Session session, Stream stream) {
-    Log.i(LOG_TAG, "Stream Dropped");
-    subscriberViewContainer.removeView(mSubscriber.getView());
-    hasStream.changeHasStream(false);
-
-  }
-
-  @Override
-  public void onError(Session session, OpentokError opentokError) {
-    Log.e(LOG_TAG, "Session error: " + opentokError.getMessage() + " / code :"+opentokError.getErrorCode().toString());
-
   }
 
   // PublisherListener methods
