@@ -277,6 +277,7 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler, Publisher
 
   private HashMap<String,Object> initSession(String sessionId, String token, String apiKey){
     HashMap<String,Object> result = new HashMap<String,Object>();
+    Log.e(LOG_TAG, "PACOTE ATUALIZADO +1");
     try{
 
       _sessionId = sessionId;
@@ -348,10 +349,9 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler, Publisher
 
 
   private Future initializeSession() {
-
     mSession = new Session.Builder(mContext, _apiKey, _sessionId).build();
     mSession.setSessionListener(sessionListener);
-
+    mSession.connect(_token);
     return executor.submit(()-> {
       mSession.connect(_token);
     });
