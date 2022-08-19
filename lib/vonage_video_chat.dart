@@ -47,13 +47,13 @@ class VonageVideoChat {
   /// Use a [Session] to use initialized session to OpenTok.
   /// 
   /// Return a [SessionResponse] value.
-  static Future<SessionResponse> initSession(Session session) async {
+  static Future<SessionResponse> initSession(Session session, String patientName) async {
     print ('initSession');
     bool havePermissions = await checkPermissions();
     if (havePermissions) {
       try {
         final result = await _channel.invokeMethod('initSession', { "sessionId": session.id, "token": session.token,
-          "apiKey": session.apiKey });
+          "apiKey": session.apiKey, 'patientName': patientName });
         return SessionResponse.fromJson(result);
       } on PlatformException {
         return SessionResponse(false);

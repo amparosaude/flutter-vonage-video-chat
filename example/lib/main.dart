@@ -17,8 +17,8 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _tokboxSessionId = '1_MX40NjYzMzg2Mn5-MTY2MDgzMzk2MDA5NH5TaHlWajVlUW1NZjNEcFp6NUpwSGtwNnd-fg';
-  String _tokboxToken = 'T1==cGFydG5lcl9pZD00NjYzMzg2MiZzaWc9YmM1OGM1NjUzMGQ1MDEyMTVmNzQwMjg0MGExNzI3NDljNjY4YTZkODpzZXNzaW9uX2lkPTFfTVg0ME5qWXpNemcyTW41LU1UWTJNRGd6TXprMk1EQTVOSDVUYUhsV2FqVmxVVzFOWmpORWNGcDZOVXB3U0d0d05uZC1mZyZjcmVhdGVfdGltZT0xNjYwODMzOTYwJm5vbmNlPTAuNDcyNzkyMDY2NzU1MDgwOSZyb2xlPXB1Ymxpc2hlciZleHBpcmVfdGltZT0xNjYzMzM5NTYwJmluaXRpYWxfbGF5b3V0X2NsYXNzX2xpc3Q9';
+  String _tokboxSessionId = '2_MX40NjYzMzg2Mn5-MTY2MTE3NDc4NDU0MH54TFBpZW1QOXo5WXhCbS9idlp1eUJISnN-fg';
+  String _tokboxToken = 'T1==cGFydG5lcl9pZD00NjYzMzg2MiZzaWc9MmIzOTBkNTBlYjY5YWVlZjgyZjdlNzY4YzQwZDhmNDU0ZTRmOTgwYzpzZXNzaW9uX2lkPTJfTVg0ME5qWXpNemcyTW41LU1UWTJNVEUzTkRjNE5EVTBNSDU0VEZCcFpXMVFPWG81V1hoQ2JTOWlkbHAxZVVKSVNuTi1mZyZjcmVhdGVfdGltZT0xNjYxMTc0Nzg1Jm5vbmNlPTAuMTQ3NTk3OTI3MDcwOTczMDgmcm9sZT1wdWJsaXNoZXImZXhwaXJlX3RpbWU9MTY2MzY4MDM4NCZpbml0aWFsX2xheW91dF9jbGFzc19saXN0PQ==';
   String _tokboxApiKey = '';
   String _publishId = 'PublishId';
 
@@ -37,13 +37,11 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _startAll() async{
     await _initSession();
-    await Future.delayed(Duration(seconds: 2));
-    await _publishStream();
   }
 
   Future<void> _initSession() async {
     final session = Session(id: _tokboxSessionId, token: _tokboxToken, apiKey: _tokboxApiKey);
-    var result = await VonageVideoChat.initSession(session);
+    var result = await VonageVideoChat.initSession(session, "Huguinho");
     setState(() {
       _sessionInited = true;
       _isPublishing = false;

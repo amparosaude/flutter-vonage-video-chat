@@ -93,7 +93,7 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler, Publisher
   @Override
   public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
     if (call.method.equals("initSession")) {
-      result.success(initSession(call.argument("sessionId"), call.argument("token"), call.argument("apiKey")));
+      result.success(initSession(call.argument("sessionId"), call.argument("token"), call.argument("apiKey"), call.argument("patientName")));
     } else if (call.method.equals("endSession")) {
       result.success(endSession());
     } else if (call.method.equals("publishStream")) {
@@ -155,6 +155,7 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler, Publisher
   private String _sessionId;
   private String _token;
   private String _apiKey;
+  private String _patientName;
 
   private HasSessionEvent hasSession;
   private HasStreamEvent hasStream;
@@ -163,7 +164,7 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler, Publisher
     @Override
     public void onConnected(Session session) {
       Log.i(LOG_TAG, "onConnected: Connected to session: " + session.getSessionId());
-
+      publishStream(_patientName);
       hasSession.changeSession(true);
     /*
     if(publisherViewContainer == null) {
@@ -275,11 +276,10 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler, Publisher
   }
 
 
-  private HashMap<String,Object> initSession(String sessionId, String token, String apiKey){
+  private HashMap<String,Object> initSession(String sessionId, String token, String apiKey, String patientName){
     HashMap<String,Object> result = new HashMap<String,Object>();
-    Log.e(LOG_TAG, "PACOTE ATUALIZADO +1");
     try{
-
+      _patientName = patientName;
       _sessionId = sessionId;
       _token = token;
       _apiKey = apiKey;
@@ -351,7 +351,6 @@ public class VonagePlugin implements FlutterPlugin, MethodCallHandler, Publisher
   private Future initializeSession() {
     mSession = new Session.Builder(mContext, _apiKey, _sessionId).build();
     mSession.setSessionListener(sessionListener);
-    mSession.connect(_token);
     return executor.submit(()-> {
       mSession.connect(_token);
     });
